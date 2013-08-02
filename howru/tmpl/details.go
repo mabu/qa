@@ -1,17 +1,17 @@
-package main
+package tmpl
 
 import "html/template"
 
-var tmplList = template.Must(template.New("list").Parse(`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+var Details = template.Must(template.New("details").Parse(`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>howru</title>
+		<title>howru {{.HWAddrs}}</title>
 	</head>
 	<body>
 		<table>
+			<caption>{{.HWAddrs}}</caption>
 			<tr>
-				<th>Aparatūriniai tinklo adresai</th>
 				<th>Tinklo adresai</th>
 				<th>IP adresas</th>
 				<th>Veikimo laikas</th>
@@ -20,9 +20,8 @@ var tmplList = template.Must(template.New("list").Parse(`<!DOCTYPE html PUBLIC "
 				<th>Serverio laikas</th>
 				<th>Klaidos</th>
 			</tr>
-			{{range .}}
+			{{range .Data}}
 			<tr>
-				<td><a href="/{{.HWAddrs}}">{{.HWAddrs}}</a></td>
 				<td>{{.Addrs}}</td>
 				<td>{{.IP}}</td>
 				<td>{{.Uptime}}</td>

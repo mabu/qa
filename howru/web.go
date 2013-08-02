@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/mabu/qa/howru/tmpl"
 	"net/http"
 	"time"
 )
@@ -38,7 +39,7 @@ func (db *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			ti = append(ti, data)
 		}
-		if err := tmplList.Execute(w, ti); err != nil {
+		if err := tmpl.List.Execute(w, ti); err != nil {
 			panic(err)
 		}
 	} else { // list all data received from a selected machine
@@ -55,7 +56,7 @@ func (db *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			ti = append(ti, data)
 		}
-		if err := tmplDetails.Execute(w, &struct {
+		if err := tmpl.Details.Execute(w, &struct {
 			HWAddrs string
 			Data    []*tmplInput
 		}{hwaddrs, ti}); err != nil {
