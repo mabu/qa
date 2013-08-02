@@ -16,12 +16,11 @@ import (
 )
 
 const (
-	SERVER   = ":8080"
-	DATABASE = ":memory:"
-	TABLE    = "data"
+	SERVER        = ":8080"
+	DATABASE      = ":memory:"
+	TABLE         = "data"
 	SI_LOAD_SHIFT = 16
 )
-
 
 func main() {
 	port := flag.Int("p", qa.PORT, "server port")

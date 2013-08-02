@@ -12,7 +12,7 @@ var data = map[string]interface{}{
 	"loads":   collector(loads),
 	"hwaddrs": collector(hwaddrs),
 	"addrs":   collector(addrs),
-	"time": collector(now),
+	"time":    collector(now),
 	"errors":  collectErrors,
 }
 

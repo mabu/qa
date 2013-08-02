@@ -20,7 +20,7 @@ func main() {
 	if *interval < servInfo.interval {
 		*interval = servInfo.interval
 	}
-	log.Printf("Connected to %s, will send data every %d seconds.",	servInfo.addr, *interval)
+	log.Printf("Connected to %s, will send data every %d seconds.", servInfo.addr, *interval)
 	conn, err := net.DialUDP("udp4", nil, servInfo.addr)
 	if err != nil {
 		panic(err)
