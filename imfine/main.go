@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/mabu/qa"
 	"log"
 	"net"
@@ -10,26 +11,26 @@ import (
 )
 
 // retry looking for a server every
-const RETRY_INTERVAL = 10 * time.Second
+const retryInterval = 10 * time.Second
 
 func main() {
-	port := flag.Int("p", qa.PORT, "server port")
+	server := flag.String("s", fmt.Sprintf("%v:%d", net.IPv4bcast, qa.Port), "server address")
 	interval := flag.Int("i", 1, "minimum interval between sending messages (seconds)")
 	flag.Parse()
-	servInfo := connect(*port)
+	servInfo := connect(*server)
 	if *interval < servInfo.interval {
 		*interval = servInfo.interval
 	}
 	log.Printf("Connected to %s, will send data every %d seconds.", servInfo.addr, *interval)
 	conn, err := net.DialUDP("udp4", nil, servInfo.addr)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	send := func() {
 		log.Println("Sending data to", conn.RemoteAddr())
 		_, err := conn.Write(collect())
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 	}
 	send()
@@ -43,48 +44,49 @@ type serverInfo struct {
 	addr     *net.UDPAddr
 }
 
-func connect(port int) *serverInfo {
+func connect(server string) *serverInfo {
+	addr, err := net.ResolveUDPAddr("udp4", server)
+	if err != nil {
+		log.Panic(err)
+	}
 	conn, err := net.ListenUDP("udp4", nil)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	defer conn.Close()
 	greet := func() {
 		log.Println("Greeting")
-		_, err := conn.WriteToUDP([]byte(qa.GREETING), &net.UDPAddr{
-			IP:   net.IPv4bcast,
-			Port: port,
-		})
+		_, err := conn.WriteToUDP([]byte(qa.Greeting), addr)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 	}
-	ticker, resChan := time.Tick(RETRY_INTERVAL), make(chan *serverInfo)
-	go listen(conn, resChan)
+	ticker, resC := time.Tick(retryInterval), make(chan *serverInfo)
+	go listen(conn, resC)
 	greet()
 	for {
 		select {
 		case <-ticker:
 			greet()
-		case r := <-resChan:
+		case r := <-resC:
 			return r
 		}
 	}
 	return nil
 }
 
-func listen(conn *net.UDPConn, resChan chan<- *serverInfo) {
+func listen(conn *net.UDPConn, resC chan<- *serverInfo) {
 	data := make([]byte, 32)
 	log.Println("Listening on", conn.LocalAddr())
 	n, addr, err := conn.ReadFromUDP(data)
 	data = data[:n]
 	log.Println("Got", data, "from", addr)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	interval, err := strconv.Atoi(string(data))
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	resChan <- &serverInfo{interval, addr}
+	resC <- &serverInfo{interval, addr}
 }

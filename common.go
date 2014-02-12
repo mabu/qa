@@ -1,9 +1,9 @@
+// Package qa provides common constants for howru and imfine.
 package qa
 
 const (
-	MAX_LEN  = 2048 // expecting messages over UDP shorter than this
-	GREETING = "heysup"
-	// some defaults:
-	PORT     = 9936
-	INTERVAL = 30 // send message every INTERVAL seconds
+	// Greeting is the initial message that client sends to a server.
+	Greeting = "heysup"
+	// Port is a default server port.
+	Port = 9936
 )

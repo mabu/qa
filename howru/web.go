@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/mabu/qa/howru/tmpl"
+	"log"
 	"net/http"
 	"time"
 )
@@ -27,32 +28,32 @@ func (ti *tmplInput) Uptime() string {
 
 func (db *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" { // list all machines
-		rows, err := db.Query("SELECT hwaddrs, group_concat(DISTINCT addrs), group_concat(DISTINCT ip), uptime, load1, load5, load15, time, srv_time, coalesce(group_concat(DISTINCT errors), '') FROM " + TABLE + " GROUP BY hwaddrs")
+		rows, err := db.Query("SELECT hwaddrs, group_concat(DISTINCT addrs), group_concat(DISTINCT ip), uptime, load1, load5, load15, time, srv_time, coalesce(group_concat(DISTINCT errors), '') FROM " + table + " GROUP BY hwaddrs")
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		var ti []*tmplInput
 		for rows.Next() {
 			data := new(tmplInput)
 			if err := rows.Scan(&data.HWAddrs, &data.Addrs, &data.IP, &data.uptime, &data.loads[0], &data.loads[1], &data.loads[2], &data.Time, &data.SrvTime, &data.Errors); err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 			ti = append(ti, data)
 		}
 		if err := tmpl.List.Execute(w, ti); err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 	} else { // list all data received from a selected machine
 		hwaddrs := r.URL.Path[1:]
-		rows, err := db.Query("SELECT addrs, ip, uptime, load1, load5, load15, time, srv_time, errors FROM "+TABLE+" WHERE hwaddrs = ?", hwaddrs)
+		rows, err := db.Query("SELECT addrs, ip, uptime, load1, load5, load15, time, srv_time, errors FROM "+table+" WHERE hwaddrs = ?", hwaddrs)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		var ti []*tmplInput
 		for rows.Next() {
 			data := new(tmplInput)
 			if err := rows.Scan(&data.Addrs, &data.IP, &data.uptime, &data.loads[0], &data.loads[1], &data.loads[2], &data.Time, &data.SrvTime, &data.Errors); err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 			ti = append(ti, data)
 		}
@@ -60,7 +61,7 @@ func (db *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			HWAddrs string
 			Data    []*tmplInput
 		}{hwaddrs, ti}); err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 	}
 }

@@ -16,17 +16,17 @@ import (
 )
 
 const (
-	SERVER        = ":8080"
-	DATABASE      = ":memory:"
-	TABLE         = "data"
-	SI_LOAD_SHIFT = 16
+	// table is a database table name.
+	table = "data"
+	// siLoadShift corresponds to SI_LOAD_SHIFT from sysinfo.h.
+	siLoadShift = 16
 )
 
 func main() {
-	port := flag.Int("p", qa.PORT, "server port")
-	interval := flag.Int("i", qa.INTERVAL, "minimum interval between sending messages (seconds)")
-	database := flag.String("d", DATABASE, "SQLite database")
-	addr := flag.String("s", SERVER, "web server address.")
+	port := flag.Int("p", qa.Port, "server port")
+	interval := flag.Int("i", 30, "minimum interval between sending messages (seconds)")
+	database := flag.String("d", ":memory:", "SQLite database")
+	addr := flag.String("s", ":8080", "web server address.")
 	flag.Parse()
 
 	db := connectDB(*database)
@@ -39,15 +39,15 @@ func main() {
 func connectDB(name string) *sql.DB {
 	db, err := sql.Open("sqlite3", name)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	var n int
-	if err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", TABLE).Scan(&n); err != nil {
-		panic(err)
+	if err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", table).Scan(&n); err != nil {
+		log.Panic(err)
 	}
 	if n == 0 {
-		if _, err := db.Exec("CREATE TABLE " + TABLE + " (id INTEGER PRIMARY KEY, uptime INTEGER, load1 REAL, load5 REAL, load15 REAL, hwaddrs TEXT, addrs TEXT, ip TEXT, time TIMESTAMP, srv_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, errors TEXT)"); err != nil {
-			panic(err)
+		if _, err := db.Exec("CREATE TABLE " + table + " (id INTEGER PRIMARY KEY, uptime INTEGER, load1 REAL, load5 REAL, load15 REAL, hwaddrs TEXT, addrs TEXT, ip TEXT, time TIMESTAMP, srv_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, errors TEXT)"); err != nil {
+			log.Panic(err)
 		}
 	}
 	return db
@@ -59,20 +59,20 @@ func listen(port int, response []byte, db *sql.DB) {
 		Port: port,
 	})
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	for {
-		data := make([]byte, qa.MAX_LEN)
+		data := make([]byte, 2048)
 		n, addr, err := conn.ReadFromUDP(data)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		data = data[:n]
-		if bytes.Equal(data, []byte(qa.GREETING)) {
+		if bytes.Equal(data, []byte(qa.Greeting)) {
 			log.Println("Greeting from", addr)
 			_, err := conn.WriteToUDP(response, addr)
 			if err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 		} else {
 			log.Println("Data", string(data), "from", addr)
@@ -84,9 +84,9 @@ func listen(port int, response []byte, db *sql.DB) {
 			for i := range e {
 				e[i] = parsed.Errors[i].Error()
 			}
-			_, err = db.Exec("INSERT INTO "+TABLE+" (uptime, load1, load5, load15, hwaddrs, addrs, ip, time, errors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", parsed.Uptime, l[0], l[1], l[2], strings.Join(parsed.HWAddrs, ", "), strings.Join(parsed.Addrs, ", "), addr.IP.String(), parsed.Time, strings.Join(e, ", "))
+			_, err = db.Exec("INSERT INTO "+table+" (uptime, load1, load5, load15, hwaddrs, addrs, ip, time, errors) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", parsed.Uptime, l[0], l[1], l[2], strings.Join(parsed.HWAddrs, ", "), strings.Join(parsed.Addrs, ", "), addr.IP.String(), parsed.Time, strings.Join(e, ", "))
 			if err != nil {
-				panic(err)
+				log.Panic(err)
 			}
 		}
 	}
@@ -104,7 +104,7 @@ type info struct {
 // Get loads as floats.
 func (inf *info) loads() (res [3]float64) {
 	for i := range res {
-		res[i] = float64(inf.Loads[i]) / (1.0 << SI_LOAD_SHIFT)
+		res[i] = float64(inf.Loads[i]) / (1.0 << siLoadShift)
 	}
 	return
 }

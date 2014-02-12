@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 	"syscall"
 	"time"
@@ -33,7 +34,7 @@ func sysinfo() *syscall.Sysinfo_t {
 	info := &syscall.Sysinfo_t{}
 	err := syscall.Sysinfo(info)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	return info
 }
@@ -50,11 +51,11 @@ func hwaddrs() interface{} {
 	var result []string
 	ifs, err := net.Interfaces()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
-	for _, in := range ifs {
-		if in.Name != "lo" {
-			result = append(result, in.HardwareAddr.String())
+	for _, i := range ifs {
+		if i.Name != "lo" {
+			result = append(result, i.HardwareAddr.String())
 		}
 	}
 	return result
@@ -64,7 +65,7 @@ func addrs() interface{} {
 	var result []string
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	for _, addr := range addrs {
 		result = append(result, addr.String())
@@ -80,7 +81,7 @@ func collect() []byte {
 	collectErrors = collectErrors[:0]
 	result, err := json.Marshal(data)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	return result
 }
